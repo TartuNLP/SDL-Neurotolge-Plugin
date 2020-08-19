@@ -56,9 +56,9 @@ namespace TartuNLP
             Options = options;
             InitializeComponent();
             SendMessage(tbURL.Handle, EM_SETCUEBANNER, 0, "https://api.tartunlp.ai/v1.2/translate");
-            SendMessage(tbAuth.Handle, EM_SETCUEBANNER, 0, "briskywombatflightluisa");
+            SendMessage(tbAuth.Handle, EM_SETCUEBANNER, 0, "public");
             tbURL.Text = "https://api.tartunlp.ai/v1.2/translate";
-            tbAuth.Text = "briskywombatflightluisa";
+            tbAuth.Text = "public";
            
         }
 
