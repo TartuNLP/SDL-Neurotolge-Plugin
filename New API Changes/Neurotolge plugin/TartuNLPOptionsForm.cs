@@ -55,9 +55,9 @@ namespace TartuNLP
             string sTargetCulture = languagePairs[0].TargetCultureName.ToLower();
             Options = options;
             InitializeComponent();
-            SendMessage(tbURL.Handle, EM_SETCUEBANNER, 0, "http://193.40.33.51/v1.2/translate");
+            SendMessage(tbURL.Handle, EM_SETCUEBANNER, 0, "https://api.tartunlp.ai/v1.2/translate");
             SendMessage(tbAuth.Handle, EM_SETCUEBANNER, 0, "briskywombatflightluisa");
-            tbURL.Text = "http://193.40.33.51/v1.2/translate";
+            tbURL.Text = "https://api.tartunlp.ai/v1.2/translate";
             tbAuth.Text = "briskywombatflightluisa";
            
         }
