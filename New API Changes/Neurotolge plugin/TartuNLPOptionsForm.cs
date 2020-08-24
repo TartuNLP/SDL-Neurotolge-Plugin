@@ -157,15 +157,15 @@ namespace TartuNLP
                 if (languageDomainSupport.Exception != null)
                 {
                     // there was an error, display for the user
-                    string caption = "CommunicationErrorCaption";
-                    string text = "CommunicationErrorText";
+                    string caption = "Communication Error";
+                    string text = "There was an error during the communication with the service. Please check the URL and authentication token or try again.";
                     MessageBox.Show(this, string.Format(text, languageDomainSupport.Exception.Message), caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (!languageDomainSupport.UpdateSuccessful)
                 {
                     // the URL or Auth is invalid, display for the user
-                    string caption = "InvalidURLorAuthCaption";
-                    string text = "InvalidURLorAuthText";
+                    string caption = "Invalid URL or Auth";
+                    string text = "Invalid URL or Authentication token";
                     MessageBox.Show(this, text, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
