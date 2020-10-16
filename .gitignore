@@ -1,9 +1,8 @@
-Version 1.0 Engine/.vs/
-Version 1.0 Engine/Neurotolge Plugin/bin/
-Version 1.0 Engine/Neurotolge Plugin/obj/
-Version 1.0 Engine/packages/
-Version 1.1 Engine/Neurotolge plugin/bin/
-Version 1.1 Engine/Neurotolge plugin/obj/Debug/
-Version 1.1 Engine/packages/
-Version 1.1 Engine/obj/Debug/
-Version 1.1 Engine/.vs/
+﻿.idea/
+.vs/
+/packages/
+/NLP Plugin.sln.DotSettings.user
+/Studio 2019/bin/
+/Studio 2019/obj/
+/Studio 2017/bin/
+/Studio 2017/obj/
