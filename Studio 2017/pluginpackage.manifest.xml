@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PluginPackage xmlns="http://www.sdl.com/Plugins/PluginPackage/1.0">
+    <PlugInName>TartuNLP</PlugInName>
+    <!--  TODO change version number upon new github release -->
+    <Version>1.2.1</Version>
+    <Description>A plugin for using TartuNLP machine translation engines.</Description>
+    <Author>University of Tartu</Author>
+    <RequiredProduct name="SDLTradosStudio" minversion="14.0" maxversion="15.0"/>
+    <Include>
+        <File>Newtonsoft.Json.dll</File>
+        <File>RestSharp.dll</File>
+    </Include>
+</PluginPackage>

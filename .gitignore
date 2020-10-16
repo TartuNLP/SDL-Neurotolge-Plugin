@@ -1,5 +1,8 @@
+﻿.idea/
 .vs/
-.idea/
-/Neurotolge plugin/bin/
-/Neurotolge plugin/obj/
 /packages/
+/NLP Plugin.sln.DotSettings.user
+/Studio 2019/bin/
+/Studio 2019/obj/
+/Studio 2017/bin/
+/Studio 2017/obj/
