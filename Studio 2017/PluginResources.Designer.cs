@@ -71,7 +71,7 @@ namespace TartuNLP {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to A plugin for using TartuNLP machine translation engines..
+        ///   Looks up a localized string similar to A plugin for using TartuNLP machine translation engines.
         /// </summary>
         public static string Plugin_Description {
             get {

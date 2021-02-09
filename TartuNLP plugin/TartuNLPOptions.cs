@@ -1,13 +1,10 @@
 ﻿using Sdl.LanguagePlatform.TranslationMemoryApi;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace TartuNLP
 {
-    public class TartuNLPOptions // TODO revise how supported languages and domains are stored.
+    public class TartuNLPOptions
     {
         #region "TranslationMethod"
         public static readonly TranslationMethod ProviderTranslationMethod = TranslationMethod.MachineTranslation;
@@ -25,42 +22,64 @@ namespace TartuNLP
             _uriBuilder = new TranslationProviderUriBuilder(uri);
         }
 
-        public Uri Uri
-        {
-            get
-            {
-                return _uriBuilder.Uri;
-            }
-        }
+        public Uri Uri => _uriBuilder.Uri;
 
         public string URL
         {
-            get { return GetStringParameter("URL"); }
-            set { SetStringParameter("URL", value); }
+            get => GetStringParameter("url");
+            set => SetStringParameter("url", value);
         }
 
         public string Auth
         {
-            get { return GetStringParameter("auth"); }
-            set { SetStringParameter("auth", value); }
+            get => GetStringParameter("Auth");
+            set => SetStringParameter("Auth", value);
         }
 
-        public string selectedDomain
+        public string SelectedDomainCode
         {
-            get { return GetStringParameter("selectdomain"); }
-            set { SetStringParameter("selectdomain", value); }
+            get => GetStringParameter("SelectedDomainCode");
+            set => SetStringParameter("SelectedDomainCode", value);
+        }
+        public string SelectedDomainName
+        {
+            get => GetStringParameter("SelectedDomainName");
+            set => SetStringParameter("SelectedDomainName", value);
         }
 
-        public string supportedLanguages
+        public (string, string)[] SupportedLanguages
         {
-            get { return GetStringParameter("supportedLanguages"); }
-            set { SetStringParameter("supportedLanguages", value); }
+            get
+            {
+                var supportedLanguagesPairs = GetStringParameter("SupportedLanguagesPairs");
+                if (supportedLanguagesPairs != null)
+                {
+                    return JsonConvert.DeserializeObject<(string, string)[]>(supportedLanguagesPairs);
+                }
+                return null;
+            }
+            set => SetStringParameter("SupportedLanguagesPairs", JsonConvert.SerializeObject(value));
         }
 
-        public string domains
+        public bool FormattingAndTagUsage
         {
-            get { return GetStringParameter("domains"); }
-            set { SetStringParameter("domains", value); }
+            get => Convert.ToBoolean(GetStringParameter("FormattingAndTagUsage"));
+            set => SetStringParameter("FormattingAndTagUsage", value.ToString());
+        }
+
+        public EngineConf EngineConf
+        {
+            get
+            {
+                var engineConf = GetStringParameter("EngineConf");
+                if (engineConf != null)
+                {
+                    return JsonConvert.DeserializeObject<EngineConf>(engineConf);
+                }
+
+                return null;
+            }
+            set => SetStringParameter("EngineConf", JsonConvert.SerializeObject(value));
         }
 
         #region "SetStringParameter"
@@ -73,7 +92,7 @@ namespace TartuNLP
         #region "GetStringParameter"
         private string GetStringParameter(string p)
         {
-            string paramString = _uriBuilder[p];
+            var paramString = _uriBuilder[p];
             return paramString;
         }
         #endregion

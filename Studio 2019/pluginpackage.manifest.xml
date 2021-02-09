@@ -2,7 +2,7 @@
 <PluginPackage xmlns="http://www.sdl.com/Plugins/PluginPackage/1.0">
     <PlugInName>TartuNLP</PlugInName>
     <!--  TODO change version number upon new github release -->
-    <Version>1.2.1</Version>
+    <Version>2.0.0</Version>
     <Description>A plugin for using TartuNLP machine translation engines.</Description>
     <Author>University of Tartu</Author>
     <RequiredProduct name="SDLTradosStudio" minversion="15.0" maxversion="16.0"/>

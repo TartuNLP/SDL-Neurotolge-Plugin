@@ -1,12 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace TartuNLP
@@ -14,83 +7,45 @@ namespace TartuNLP
    
     public partial class TartuNLPConfigForm : Form
     {
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
-        private static extern Int32
-           SendMessage(
-                           IntPtr hWnd,
-                           int msg,
-                           int wParam,
-                           [MarshalAs(UnmanagedType.LPWStr)]string lParam
-                       );
-
-        private const int EM_SETCUEBANNER = 0x1501;
-
-
-        public TartuNLPOptions Options
-
-        {
-
-            get;
-
-            set;
-
-        }
+        public TartuNLPOptions Options { get; set; }
 
         private class LanguageDomainSupport
-        {
-            public string URL;
-            public string Auth;
+        { 
+            public EngineConf EngineConf;
             public bool UpdateSuccessful;
-            public IDictionary<string, string[]> SupportedLanguages;
-            public IDictionary<string, string> SupportedDomains;
-            public IDictionary<string, string[]> JSON;
+            public Dictionary<string, string> SupportedDomains;
+            public Dictionary<string, Dictionary<string, List<string>>> SupportedLanguages;
+            public bool FormattingAndTagUsage;
             public Exception Exception;
         }
 
         private LanguageDomainSupport languageDomainSupport;
-
-        public TartuNLPConfigForm(TartuNLPOptions options, Sdl.LanguagePlatform.Core.LanguagePair[] languagePairs)
+        public TartuNLPConfigForm(TartuNLPOptions options)
         {
-            string sSourceCulture = languagePairs[0].SourceCultureName.ToLower();
-            string sTargetCulture = languagePairs[0].TargetCultureName.ToLower();
             Options = options;
             InitializeComponent();
-            SendMessage(tbURL.Handle, EM_SETCUEBANNER, 0, "https://api.tartunlp.ai/v1.2/translate");
-            SendMessage(tbAuth.Handle, EM_SETCUEBANNER, 0, "public");
-            tbURL.Text = "https://api.tartunlp.ai/v1.2/translate";
-            tbAuth.Text = "public";
-           
         }
 
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            if (Options.Auth != null)
+            btnUpdate.Enabled = true;
+            btnOK.Enabled = false;
+            cbDomain.Items.Clear();
+            if (Options.EngineConf != null && Options.URL != null && Options.Auth != null)
             {
                 tbURL.Text = Options.URL;
                 tbAuth.Text = Options.Auth;
-                lbLanguages.Items.Clear();
-                this.btnOK.Enabled = !string.IsNullOrEmpty(Options.URL);
-                cbDomains.Items.Clear();
-                IDictionary<string, string> domains = new Dictionary<string, string>();
-                if (Options.domains != null)
+                languageDomainSupport = loadEngineConf(Options.EngineConf);
+                cbDomain.Items.Clear();
+                foreach (var domainName in languageDomainSupport.SupportedDomains.Keys)
                 {
-                    string[] doms = Options.domains.Split(';');
-                    foreach (string dom in doms)
-                    {
-                        string[] domain = dom.Split('|');
-                        domains.Add(domain[1].Trim(), domain[0].Trim());
-                        cbDomains.Items.Add(domain[0].Trim());
-                    }
+                    cbDomain.Items.Add(domainName);
                 }
-
-                if (Options.selectedDomain != null)
-                    cbDomains.SelectedItem = domains[Options.selectedDomain];
-
+                cbDomain.SelectedItem = Options.SelectedDomainName;
+                btnOK.Enabled = true;
             }
-
         }
-
         
         private void tbURLAuth_TextChanged(object sender, EventArgs e)
         {
@@ -101,55 +56,72 @@ namespace TartuNLP
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             btnOK.Enabled = false;
-            lbLanguages.Items.Clear();
-
-            // do the update in the background
-            languageDomainSupport = updateConfig(tbURL.Text, tbAuth.Text);
-            handleUpdateFinished();
+            srcLanguages.Items.Clear();
+            tgtLanguages.Items.Clear();
+            
+            languageDomainSupport = UpdateConfig(tbURL.Text, tbAuth.Text);
+            HandleUpdateFinished();
         }
 
-        private LanguageDomainSupport updateConfig(string url, string auth)
+        private LanguageDomainSupport loadEngineConf(EngineConf engineConf)
         {
-            var languageDomainSupport = new LanguageDomainSupport()
+            var config = new LanguageDomainSupport
             {
-                URL = url,
-                Auth = auth
+                EngineConf = engineConf,
+                UpdateSuccessful = true,
+                FormattingAndTagUsage = engineConf.xml_support,
+                SupportedDomains = new Dictionary<string, string>(),
+                SupportedLanguages = new Dictionary<string, Dictionary<string, List<string>>>()
             };
+            
+            foreach (var domain in engineConf.domains)
+            {
+                config.SupportedDomains.Add(domain.name, domain.code);
+                config.SupportedLanguages.Add(domain.code, new Dictionary<string, List<string>>());
+                foreach (var language in domain.languages)
+                {
+                    var languagePair = language.Split('-');
+                    if (!config.SupportedLanguages[domain.code].ContainsKey(languagePair[0]))
+                    {
+                        config.SupportedLanguages[domain.code].Add(languagePair[0], new List<string>());
+                    }
+
+                    config.SupportedLanguages[domain.code][languagePair[0]].Add(languagePair[1]);
+                }
+            }
+
+            return config;
+        }
+
+        
+        private LanguageDomainSupport UpdateConfig(string url, string auth)
+        {
+            var config = new LanguageDomainSupport();
             try
             {
                 // try to get Configuration
                 // Do not call any blocking service in the user interface thread; it has to use background threads.
-                languageDomainSupport.JSON = TartuNLPConnector.GetConfig(url, auth);
-
-                if (languageDomainSupport.JSON == null)
+                var engineConf = TartuNLPConnector.GetConfig(url, auth);
+                
+                if (engineConf == null)
                 {
                     //invalid user name or password
-                    languageDomainSupport.UpdateSuccessful = false;
+                    config.UpdateSuccessful = false;
                 }
                 else
                 {
-                    //successful login
-                    languageDomainSupport.UpdateSuccessful = true;
-
-                    //try to get the list of the Domain in the background
-                    languageDomainSupport.SupportedDomains = new Dictionary<string, string>();
-                    languageDomainSupport.SupportedLanguages = new Dictionary<string, string[]>();
-                    foreach (string key in languageDomainSupport.JSON.Keys)
-                    {
-                        languageDomainSupport.SupportedDomains.Add(languageDomainSupport.JSON[key][0], key);
-                        languageDomainSupport.SupportedLanguages.Add(languageDomainSupport.JSON[key][0], languageDomainSupport.JSON[key]);
-                    }
+                    config = loadEngineConf(engineConf);
                 }
             }
             catch (Exception ex)
             {
-                languageDomainSupport.Exception = ex;
+                config.Exception = ex;
             }
 
-            return languageDomainSupport;
+            return config;
         }
 
-        private void handleUpdateFinished()
+        private void HandleUpdateFinished()
         {
             // it is possible that the form has disposed during the background operation (e.g. the user clicked on the cancel button)
             if (!IsDisposed)
@@ -157,26 +129,26 @@ namespace TartuNLP
                 if (languageDomainSupport.Exception != null)
                 {
                     // there was an error, display for the user
-                    string caption = "Communication Error";
-                    string text = "There was an error during the communication with the service. Please check the URL and authentication token or try again.";
+                    var caption = "Communication Error";
+                    var text = "There was an error during the communication with the service. Please check the URL and authentication token or try again.";
                     MessageBox.Show(this, string.Format(text, languageDomainSupport.Exception.Message), caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else if (!languageDomainSupport.UpdateSuccessful)
                 {
                     // the URL or Auth is invalid, display for the user
-                    string caption = "Invalid URL or Auth";
-                    string text = "Invalid URL or Authentication token";
+                    var caption = "Invalid URL or Auth";
+                    var text = "Invalid URL or Authentication token";
                     MessageBox.Show(this, text, caption, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else
                 {
                     // we have managed to get the supported Domain, display them in the combo box
-                    cbDomains.Items.Clear();
-                    foreach (string dom in languageDomainSupport.SupportedDomains.Keys)
+                    cbDomain.Items.Clear();
+                    foreach (var domain in languageDomainSupport.SupportedDomains.Keys)
                     {
-                        cbDomains.Items.Add(dom);
+                        cbDomain.Items.Add(domain);
                     }
-                    cbDomains.SelectedIndex = 0;
+                    cbDomain.SelectedIndex = 0;
 
                 }
             }
@@ -184,82 +156,63 @@ namespace TartuNLP
 
         private void cbDomain_SelectedIndexChanged(object sender, EventArgs e)
         {
+            srcLanguages.Items.Clear();
             if (languageDomainSupport != null)
             {
-
-                lbLanguages.Items.Clear();
-                foreach (string language in languageDomainSupport.SupportedLanguages[this.cbDomains.SelectedItem.ToString()])
+                var domain = languageDomainSupport.SupportedDomains[cbDomain.SelectedItem.ToString()];
+                srcLanguages.Items.Clear();
+                foreach (var language in languageDomainSupport.SupportedLanguages[domain])
                 {
-                    lbLanguages.Items.Add(language);
+                    srcLanguages.Items.Add(language.Key);
                 }
-                lbLanguages.Items.RemoveAt(0);
-
-                btnOK.Enabled = languageDomainSupport.SupportedLanguages[this.cbDomains.SelectedItem.ToString()].Length > 0;
-            }
-            else
-            {
-                lbLanguages.Items.Clear();
-                IDictionary<string, string[]> supportedLanguages = new Dictionary<string, string[]>();
-                if (Options.supportedLanguages != null) {
-                    string[] supportedLangs = Options.supportedLanguages.Split(';');
-                    foreach (string languageList in supportedLangs)
-                    {
-                        string[] languages = languageList.Split('|');
-                        supportedLanguages.Add(languages[0].Trim(), languages[1].Split(','));
-                    }
-                }
-
-                foreach (string language in supportedLanguages[this.cbDomains.SelectedItem.ToString()])
-                {
-                    lbLanguages.Items.Add(language);
-                }
-                lbLanguages.Items.RemoveAt(0);
-
-                btnOK.Enabled = supportedLanguages[this.cbDomains.SelectedItem.ToString()].Length > 0;
+                srcLanguages.SelectedIndex = 0;
+                
+                btnOK.Enabled = languageDomainSupport.SupportedLanguages[domain].Count > 0;
             }
         }
 
+        private void srcLanguages_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            tgtLanguages.Items.Clear();
+            if (languageDomainSupport != null)
+            {
+                var domain = languageDomainSupport.SupportedDomains[cbDomain.SelectedItem.ToString()];
+                tgtLanguages.Items.Clear();
+                foreach (var language in languageDomainSupport.SupportedLanguages[domain][srcLanguages.SelectedItem.ToString()])
+                {
+                    tgtLanguages.Items.Add(language);
+                }
+            }
+        }
 
         private void TartuNLPOptionsForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (DialogResult == System.Windows.Forms.DialogResult.OK)
+            if (DialogResult == DialogResult.OK)
             {
                 // if there was a modification, we have to save the changes
                 Options.URL = tbURL.Text;
                 Options.Auth = tbAuth.Text;
                 if (languageDomainSupport != null)
                 {
-                    int counter = 0;
-                    string[] supportedLanguages = new string[languageDomainSupport.SupportedLanguages.Count];
-                    foreach (KeyValuePair<string, string[]> langs in languageDomainSupport.SupportedLanguages)
+                    var domain = languageDomainSupport.SupportedDomains[cbDomain.SelectedItem.ToString()];
+                    Options.EngineConf = languageDomainSupport.EngineConf;
+                    var languagePairs = new List<(string, string)>();
+                    foreach (var languagePair in languageDomainSupport.SupportedLanguages[domain])
                     {
-                        supportedLanguages[counter] = langs.Key + "|" + String.Join(",", langs.Value);
-                        counter++;
+                        foreach (var targetLang in languagePair.Value)
+                        {
+                            languagePairs.Add((languagePair.Key, targetLang));
+                        }
                     }
-                    string supportedLangs = string.Join("; ", supportedLanguages);
-                    
-                    Options.supportedLanguages = supportedLangs;
-                    string[] supportedDomains = new string[cbDomains.Items.Count];
-                    int count = 0;
-                    foreach (KeyValuePair<string, string> dom in languageDomainSupport.SupportedDomains)
-                    {
-                        supportedDomains[count] = dom.Key + "|" + dom.Value;
-                        count++;
-                    }
-                    string supportedDoms = string.Join(";", supportedDomains);
-                    Options.domains = supportedDoms;
+                    Options.SupportedLanguages = languagePairs.ToArray();
+                    Options.SelectedDomainCode = domain;
+                    Options.SelectedDomainName = cbDomain.SelectedItem.ToString();
+                    Options.FormattingAndTagUsage = languageDomainSupport.FormattingAndTagUsage;
                 }
-                IDictionary<string, string> domains = new Dictionary<string, string>();
-                string[] doms = Options.domains.Split(';');
-                foreach (string dom in doms)
-                {
-                    string[] domain = dom.Split('|');
-                    domains.Add(domain[0], domain[1]);
-                }
-                Options.selectedDomain = domains[this.cbDomains.SelectedItem.ToString()];
-                this.lbLanguages.Items.Clear();
             }
+            srcLanguages.Items.Clear();
+            tgtLanguages.Items.Clear();
+            cbDomain.Items.Clear();
         }
-
-       }
+    }
 }

@@ -119,7 +119,7 @@
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\TartuNLP.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\TartuNLP Plugin\Resources\TartuNLP.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Plugin_Description" xml:space="preserve">
     <value>A plugin for using TartuNLP machine translation engines.</value>
@@ -131,7 +131,7 @@
     <value>TartuNLP</value>
   </data>
   <data name="symbol" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\TartuNLP.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\TartuNLP Plugin\Resources\TartuNLP.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="TartuNLPProviderLanguageDirection_SearchSegmentsMasked_segments_in_SearchSegmentsMasked" xml:space="preserve">
     <value>segments is null in SearchSegmentsMasked</value>

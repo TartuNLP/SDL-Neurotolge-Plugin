@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Net;
-using System.Web;
-using Newtonsoft.Json;
-using RestSharp;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Sdl.LanguagePlatform.Core;
-using Newtonsoft.Json.Linq;
-using System.IO;
 using System.Net.Http;
 using System.Web.Script.Serialization;
 
@@ -27,21 +20,38 @@ namespace TartuNLP
             _domain = domain;
             _auth = auth;
         }
+        
+        public static EngineConf GetConfig(string url, string auth)
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("x-api-key", auth);
+            client.DefaultRequestHeaders.Add("application", "SDL");
+            var response = client.GetAsync(url).Result;
+            var engineConf = new JavaScriptSerializer().Deserialize<EngineConf>(response.Content.ReadAsStringAsync().Result);
+            return engineConf;
+        }
 
         public List<string> GetTranslation(LanguagePair languageDirection, List<string> sourceString)
         {
+            var sourceLanguage = languageDirection.SourceCulture.TwoLetterISOLanguageName;
             var targetLanguage = languageDirection.TargetCulture.TwoLetterISOLanguageName;
             try
             {
                 var client = new HttpClient();
-                var content = new BatchInput {text = sourceString};
+                client.DefaultRequestHeaders.Add("x-api-key", _auth);
+                client.DefaultRequestHeaders.Add("application", "SDL");
+                var content = new BatchInput
+                {
+                    text = sourceString,
+                    src = sourceLanguage,
+                    tgt = targetLanguage,
+                    domain = _domain
+                };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(content);
-                var response = client.PostAsync(_url + "?auth=" + _auth + "&olang=" + targetLanguage + "&odomain=" + _domain, new StringContent(json, Encoding.UTF8, "application/json")).Result;
-                var translatedObject = new JavaScriptSerializer().Deserialize<JSONResponseBatch>(response.Content.ReadAsStringAsync().Result);
-
-                var translatedText = translatedObject.result;
-                
-                return translatedText;
+                var strContent = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = client.PostAsync(_url, strContent).Result;
+                var jsonResponse = new JavaScriptSerializer().Deserialize<JSONResponseBatch>(response.Content.ReadAsStringAsync().Result);
+                return jsonResponse.result;
             } 
             catch (Exception ex)
             {
@@ -51,47 +61,31 @@ namespace TartuNLP
                 throw new Exception(message);
             }
         }
-
-        public static IDictionary<string, string[]> GetConfig(string url, string auth)
-        {
-            var client = new HttpClient();
-            var content = new StringContent("application/json");
-            var response = client.PostAsync(url + "/support?auth=" + auth, content).Result;
-            var jsonResponse = new JavaScriptSerializer().Deserialize<ConfigJSON>(response.Content.ReadAsStringAsync().Result);
-            IDictionary<string, string[]> config = new Dictionary<string, string[]>();
-            foreach (var option in jsonResponse.options)
-            {
-                var languages = (option.name + "," + string.Join(",", option.lang)).Split(',');
-                config.Add(option.odomain, languages);
-            }
-            return config;
-
-        }
     }
-
-    class ConfigJSON
+    
+    public class EngineConf
     {
-        public string domain { get; set; }
-        public OptionsJSON[] options { get; set; }
+        public bool xml_support { get; set; }
+        public DomainConf[] domains { get; set; }
     }
-
-    class OptionsJSON
+    
+    public class DomainConf
     {
-        public string odomain { get; set; }
         public string name { get; set; }
-        public string[] lang { get; set; }
+        public string code { get; set; }
+        public string[] languages { get; set; }
     }
 
-    class BatchInput
+    internal class BatchInput
     {
         public List<string> text;
+        public string src;
+        public string tgt;
+        public string domain;
     }
 
     public class JSONResponseBatch
     {
         public List<string> result { get; set; }
-        public string status { get; set; }
-        public List<string> input { get; set; }
-        public string message { get; set; }
     }
 }

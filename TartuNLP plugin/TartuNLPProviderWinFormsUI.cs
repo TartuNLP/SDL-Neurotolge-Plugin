@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Sdl.LanguagePlatform.Core;
-using Sdl.LanguagePlatform.TranslationMemory;
 using Sdl.LanguagePlatform.TranslationMemoryApi;
 
 namespace TartuNLP
@@ -20,15 +16,16 @@ namespace TartuNLP
         {
             if (languagePairs.Length > 0)
             {
-                TartuNLPConfigForm dialog = new TartuNLPConfigForm(new TartuNLPOptions(), languagePairs);
+                TartuNLPConfigForm dialog = new TartuNLPConfigForm(new TartuNLPOptions());
                 if (dialog.ShowDialog(owner) == DialogResult.OK)
                 {
-                    TartuNLPProvider testProvider = new TartuNLPProvider(dialog.Options);
-                    return new ITranslationProvider[] { testProvider };
+                    TartuNLPProvider tartuNLPProvider = new TartuNLPProvider(dialog.Options);
+                    return new ITranslationProvider[] { tartuNLPProvider };
                 }
             }
             else {
-                MessageBox.Show("Please configure at least one language pair before setting up the plugin","Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please configure at least one language pair before setting up the plugin",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return null;
         }
@@ -41,7 +38,7 @@ namespace TartuNLP
                 return false;
             }
 
-            TartuNLPConfigForm dialog = new TartuNLPConfigForm(editProvider.Options, languagePairs);
+            TartuNLPConfigForm dialog = new TartuNLPConfigForm(editProvider.Options);
             if (dialog.ShowDialog(owner) == DialogResult.OK)
             {
                 editProvider.Options = dialog.Options;
@@ -57,18 +54,17 @@ namespace TartuNLP
 
         public TranslationProviderDisplayInfo GetDisplayInfo(Uri translationProviderUri, string translationProviderState)
         {
-            TranslationProviderDisplayInfo info = new TranslationProviderDisplayInfo();
-            info.Name = PluginResources.Plugin_NiceName;
+            var options = new TartuNLPOptions(translationProviderUri);
+            var info = new TranslationProviderDisplayInfo();
+            info.Name = String.Format("{0} ({1})", TypeName, options.SelectedDomainName);
+            info.TooltipText = TypeDescription;
             info.TranslationProviderIcon = PluginResources.icon;
             info.SearchResultImage = PluginResources.symbol;
 
             return info;
         }
 
-        public bool SupportsEditing
-        {
-            get { return true; }
-        }
+        public bool SupportsEditing => true;
 
         public bool SupportsTranslationProviderUri(Uri translationProviderUri)
         {
@@ -79,15 +75,9 @@ namespace TartuNLP
             return String.Equals(translationProviderUri.Scheme, TartuNLPProvider.ListTranslationProviderScheme, StringComparison.CurrentCultureIgnoreCase);
         }
 
-        public string TypeDescription
-        {
-            get { return PluginResources.Plugin_Description; }
-        }
+        public string TypeDescription => PluginResources.Plugin_Description;
 
-        public string TypeName
-        {
-            get { return PluginResources.Plugin_NiceName; }
-        }
+        public string TypeName => PluginResources.Plugin_NiceName;
 
         #endregion
     }

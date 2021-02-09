@@ -28,15 +28,6 @@ namespace TartuNLP
         private SearchResult CreateSearchResult(Segment segment, TartuNLPTagPlacer tagPlacer, string translation)
         {
             var targetSegment = tagPlacer.GetTaggedSegment(translation);
-            // handle cases where input and output tags did not match 
-            if (targetSegment == null)
-            {
-                var sourceStrings = new List<string> {segment.ToPlain()};
-                translation = SearchInServer(sourceStrings)[0];
-                
-                targetSegment = new Segment(_languageDirection.TargetCulture);
-                targetSegment.Add(translation);
-            }
             
             var translationUnit = new TranslationUnit
                 {
@@ -59,7 +50,7 @@ namespace TartuNLP
                 // Use basic connection settings
                 var url = _options.URL;
                 var auth = _options.Auth;
-                var domain = _options.selectedDomain;
+                var domain = _options.SelectedDomainCode;
                 _tartuNLPConnector = new TartuNLPConnector(url, auth, domain);
             }
             return _tartuNLPConnector.GetTranslation(_languageDirection, sourceStrings);
@@ -89,7 +80,7 @@ namespace TartuNLP
 
             var tagPlacers = segments
                 .Where((segment, i) => mask == null || mask[i])
-                .Select(segment => new TartuNLPTagPlacer(segment)).ToList();
+                .Select(segment => new TartuNLPTagPlacer(segment, _options.FormattingAndTagUsage)).ToList();
             
             var results = new SearchResults[segments.Length];
             
@@ -142,23 +133,25 @@ namespace TartuNLP
             return SearchSegmentsMasked(settings, segments, mask);
         }
         
-        public bool CanReverseLanguageDirection => true; // TODO handle cases with asymmetric MT models
-
-        public System.Globalization.CultureInfo SourceLanguage
+        public bool CanReverseLanguageDirection
         {
-            get { return _languageDirection.SourceCulture; }
+            get
+            {
+                var source = _languageDirection.SourceCulture.ThreeLetterISOLanguageName;
+                var target = _languageDirection.SourceCulture.ThreeLetterISOLanguageName;
+                // The API does not use standard ISO codes for German.
+                source = source == "deu" ? "ger" : source;
+                target = target == "deu" ? "ger" : target;
+                return (_provider.Options.SupportedLanguages.Contains((target, source)));
+            }
         }
 
-        public System.Globalization.CultureInfo TargetLanguage
-        {
-            get { return _languageDirection.TargetCulture; }
-        }
+        public System.Globalization.CultureInfo SourceLanguage => _languageDirection.SourceCulture;
 
-        public ITranslationProvider TranslationProvider
-        {
-            get { return _provider; }
-        }
-        
+        public System.Globalization.CultureInfo TargetLanguage => _languageDirection.TargetCulture;
+
+        public ITranslationProvider TranslationProvider => _provider;
+
         public ImportResult[] AddOrUpdateTranslationUnits(TranslationUnit[] translationUnits, int[] previousTranslationHashes, ImportSettings settings)
         {
             throw new NotImplementedException();

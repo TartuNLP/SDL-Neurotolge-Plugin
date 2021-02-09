@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Sdl.LanguagePlatform.Core;
-using Sdl.LanguagePlatform.TranslationMemory;
 using Sdl.LanguagePlatform.TranslationMemoryApi;
 
 namespace TartuNLP
@@ -32,128 +29,65 @@ namespace TartuNLP
             return new TartuNLPProviderLanguageDirection(this, languageDirection);
         }
 
-        public bool IsReadOnly
-        {
-            get { return true; }
-        }
+        public bool IsReadOnly => true;
 
         public void LoadState(string translationProviderState)
         {
         }
 
-        public string Name
-        {
-            get { return PluginResources.Plugin_NiceName; }
-        }
+        public string Name => PluginResources.Plugin_NiceName;
 
-        public void RefreshStatusInfo()
-        {
-        }
+        public void RefreshStatusInfo(){}
 
-        public string SerializeState()
-        {
-            return null;
-        }
+        public string SerializeState() => null;
 
-        public ProviderStatusInfo StatusInfo
-        {
-            get { return new ProviderStatusInfo(true, PluginResources.Plugin_NiceName); }
-        }
+        public ProviderStatusInfo StatusInfo => new ProviderStatusInfo(true, PluginResources.Plugin_NiceName);
 
-        public bool SupportsConcordanceSearch
-        {
-            get { return false; }
-        }
+        public bool SupportsConcordanceSearch => false;
 
-        public bool SupportsDocumentSearches
-        {
-            get { return false; }
-        }
+        public bool SupportsDocumentSearches => false;
 
-        public bool SupportsFilters
-        {
-            get { return false; }
-        }
+        public bool SupportsFilters => false;
 
-        public bool SupportsFuzzySearch
-        {
-            get { return false; }
-        }
+        public bool SupportsFuzzySearch => false;
 
         public bool SupportsLanguageDirection(LanguagePair languageDirection)
         {
-            return true; // TODO check supported languages
+            var source = languageDirection.SourceCulture.ThreeLetterISOLanguageName;
+            var target = languageDirection.TargetCulture.ThreeLetterISOLanguageName;
+            // The API does not use standard ISO codes for German.
+            source = source == "deu" ? "ger" : source;
+            target = target == "deu" ? "ger" : target;
+            return (Options.SupportedLanguages.Contains((source, target)));
         }
 
-        public bool SupportsMultipleResults
-        {
-            get { return false; }
-        }
+        public bool SupportsMultipleResults => false;
 
-        public bool SupportsPenalties
-        {
-            get { return false; }
-        }
+        public bool SupportsPenalties => false;
 
-        public bool SupportsPlaceables
-        {
-            get { return true; }
-        }
+        public bool SupportsPlaceables => Options.FormattingAndTagUsage;
 
-        public bool SupportsScoring
-        {
-            get { return false; }
-        }
+        public bool SupportsScoring => false;
 
-        public bool SupportsSearchForTranslationUnits
-        {
-            get { return true; }
-        }
+        public bool SupportsSearchForTranslationUnits => true;
 
-        public bool SupportsSourceConcordanceSearch
-        {
-            get { return false; }
-        }
+        public bool SupportsSourceConcordanceSearch => false;
 
-        public bool SupportsStructureContext
-        {
-            get { return false; }
-        }
+        public bool SupportsStructureContext => false;
 
-        public bool SupportsTaggedInput
-        {
-            get { return true; }
-        }
+        public bool SupportsTaggedInput => Options.FormattingAndTagUsage;
 
-        public bool SupportsTargetConcordanceSearch
-        {
-            get { return false; }
-        }
+        public bool SupportsTargetConcordanceSearch => false;
 
-        public bool SupportsTranslation
-        {
-            get { return true; }
-        }
+        public bool SupportsTranslation => true;
 
-        public bool SupportsUpdate
-        {
-            get { return false; }
-        }
+        public bool SupportsUpdate => false;
 
-        public bool SupportsWordCounts
-        {
-            get { return false; }
-        }
+        public bool SupportsWordCounts => false;
 
-        public TranslationMethod TranslationMethod
-        {
-            get { return TartuNLPOptions.ProviderTranslationMethod; }
-        }
+        public TranslationMethod TranslationMethod => TartuNLPOptions.ProviderTranslationMethod;
 
-        public Uri Uri
-        {
-            get { return Options.Uri; }
-        }
+        public Uri Uri => Options.Uri;
 
         #endregion
     }
